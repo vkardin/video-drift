@@ -238,5 +238,44 @@
   },
   "modeReady": {
     "message": "Можна винести відео у вікно"
+  },
+  "chooseVideo": {
+    "message": "Обрати відео"
+  },
+  "openLibrary": {
+    "message": "Бібліотека перегляду"
+  },
+  "watchLater": {
+    "message": "Подивитися пізніше"
+  },
+  "undo": {
+    "message": "Скасувати видалення"
+  },
+  "backup": {
+    "message": "Зберегти копію"
+  },
+  "restore": {
+    "message": "Відновити копію"
+  },
+  "allSites": {
+    "message": "Усі сайти"
+  },
+  "confirmRestore": {
+    "message": "Об’єднати резервну копію зі збереженими даними?"
+  },
+  "subtitleSize": {
+    "message": "Розмір субтитрів"
+  },
+  "subtitleBackground": {
+    "message": "Тло субтитрів"
+  },
+  "subtitleOffset": {
+    "message": "Відступ субтитрів знизу"
+  },
+  "moreControls": {
+    "message": "Додаткові кнопки"
+  },
+  "saved": {
+    "message": "Збережено"
   }
 }

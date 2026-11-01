@@ -238,5 +238,44 @@
   },
   "modeReady": {
     "message": "Ready to float the video"
+  },
+  "chooseVideo": {
+    "message": "Choose video"
+  },
+  "openLibrary": {
+    "message": "Viewing library"
+  },
+  "watchLater": {
+    "message": "Watch later"
+  },
+  "undo": {
+    "message": "Undo deletion"
+  },
+  "backup": {
+    "message": "Save backup"
+  },
+  "restore": {
+    "message": "Restore backup"
+  },
+  "allSites": {
+    "message": "All sites"
+  },
+  "confirmRestore": {
+    "message": "Merge this backup with your saved data?"
+  },
+  "subtitleSize": {
+    "message": "Subtitle size"
+  },
+  "subtitleBackground": {
+    "message": "Subtitle background"
+  },
+  "subtitleOffset": {
+    "message": "Subtitle bottom offset"
+  },
+  "moreControls": {
+    "message": "More controls"
+  },
+  "saved": {
+    "message": "Saved"
   }
 }

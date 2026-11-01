@@ -96,3 +96,21 @@ test('links keep site time formats and export keeps notes', async () => {
   assert.match(md, /01:30/);
   assert.match(md, /Important/);
 });
+
+test('backup merges collections, preserves existing notes and rejects unsafe files before writing', async () => {
+  const { F, data } = fixture();
+  await F.saveLater({ url: 'https://example.com/later', title: 'Later' });
+  await F.addBookmark('https://example.com/video', { url: 'https://example.com/video', title: 'Video' }, 30, 'Note');
+  const backup = await F.exportBackup();
+  await F.importBackup(backup);
+  assert.equal((await F.laterVideos()).length, 1);
+  assert.equal((await F.allBookmarks())[0].items.length, 1);
+  const bad = JSON.parse(JSON.stringify(backup)); bad.later.push({ url: 'javascript:alert(1)' });
+  const before = JSON.stringify(data);
+  await assert.rejects(F.importBackup(bad));
+  assert.equal(JSON.stringify(data), before);
+  await F.removeLater('https://example.com/later');
+  assert.equal((await F.laterVideos()).length, 0);
+  await F.importBackup(backup);
+  assert.equal((await F.laterVideos()).length, 1);
+});

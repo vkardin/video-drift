@@ -44,8 +44,13 @@
   }
 
   function render(s) {
-    if (!s || !s.ok) { st = null; $('main').hidden = true; $('empty').hidden = false; $('exportThis').disabled = true; return; }
+    if (!s || !s.ok) { st = null; $('saveLater').disabled = true; $('main').hidden = true; $('empty').hidden = false; $('exportThis').disabled = true; return; }
     st = s;
+    $('saveLater').disabled = false;
+    if (s.videos) {
+      $('videoSelect').replaceChildren(...s.videos.map((v) => { const o = document.createElement('option'); o.value = v.index; o.textContent = v.label; o.selected = v.selected; return o; }));
+      $('videoSelect').hidden = s.videos.length < 2;
+    }
     $('main').hidden = false;
     $('empty').hidden = true;
     $('exportThis').disabled = !s.bookmarks.length;
@@ -300,8 +305,15 @@
   $('hoverButton').addEventListener('change', (e) => F.saveSettings({ hoverButton: e.target.checked }).catch(notice));
   $('pageMode').addEventListener('change', (e) => F.saveSettings({ floatMode: e.target.checked ? 'page' : 'window' }).catch(notice));
 
+  $('saveLater').onclick = action(async () => { if (!st) return; await F.saveLater(st.info); flash($('saveLater'), t('saved')); });
+  $('openLibrary').onclick = () => api.tabs.create({ url: api.runtime.getURL('library/library.html') });
+  $('videoSelect').onchange = async () => render(await send({ type: 'selectVideo', index: +$('videoSelect').value }));
   async function init() {
     settings = await F.getSettings();
+    for (const key of ['subtitleSize', 'subtitleBackground', 'subtitleOffset']) {
+      $(key).value = settings[key];
+      $(key).onchange = () => F.saveSettings({ [key]: +$(key).value }).catch(notice);
+    }
     $('opacity').value = settings.opacity;
     $('opOut').textContent = settings.opacity + '%';
     $('autoResume').checked = settings.autoResume;

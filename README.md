@@ -14,6 +14,10 @@ English · <a href="README.ru.md">Русский</a> · <a href="README.uk.md">�
 
 Video Drift pops any web video into a floating window that stays on top while you work. The site's subtitles go with it, the exact second you stopped is remembered for every video, and your notes to the frame export to a tidy Markdown file. Works on YouTube, Twitch, online courses and any other site with HTML5 video. Free, no account needed.
 
+## Version 2.0
+
+A dedicated viewing library groups Continue, Watch later and Bookmarks, with search and site filters. Export a JSON backup and merge it back on another installation. The in-page player remembers its position and size, offers expandable controls and an A–B repeat button (set A, set B, click again to clear). Subtitle size, background and bottom offset are adjustable in the popup settings. Select between multiple videos in the current frame. Existing 1.x history and bookmarks remain compatible.
+
 ## Install
 
 - **Chrome, Edge, Brave, Opera:** Chrome Web Store listing is on the way; meanwhile use the zip below

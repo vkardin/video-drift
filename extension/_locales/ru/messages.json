@@ -238,5 +238,44 @@
   },
   "modeReady": {
     "message": "Можно вынести видео в окно"
+  },
+  "chooseVideo": {
+    "message": "Выбрать видео"
+  },
+  "openLibrary": {
+    "message": "Библиотека просмотра"
+  },
+  "watchLater": {
+    "message": "Посмотреть позже"
+  },
+  "undo": {
+    "message": "Отменить удаление"
+  },
+  "backup": {
+    "message": "Сохранить копию"
+  },
+  "restore": {
+    "message": "Восстановить копию"
+  },
+  "allSites": {
+    "message": "Все сайты"
+  },
+  "confirmRestore": {
+    "message": "Объединить резервную копию с сохранёнными данными?"
+  },
+  "subtitleSize": {
+    "message": "Размер субтитров"
+  },
+  "subtitleBackground": {
+    "message": "Фон субтитров"
+  },
+  "subtitleOffset": {
+    "message": "Отступ субтитров снизу"
+  },
+  "moreControls": {
+    "message": "Дополнительные кнопки"
+  },
+  "saved": {
+    "message": "Сохранено"
   }
 }

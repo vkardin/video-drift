@@ -9,6 +9,9 @@
     opacity: 100,
     autoResume: true,
     rememberHistory: true,
+    subtitleSize: 20,
+    subtitleBackground: 72,
+    subtitleOffset: 80,
     hoverButton: true,
     floatMode: 'window', // 'window' (separate always-on-top window) or 'page' (mini player over the page)
     buttons: {
@@ -128,7 +131,7 @@
     return (await get('local', k))[k] || null;
   }
   function savePosition(key, data) {
-    return set('local', { ['pos:' + hash(key)]: Object.assign({ at: Date.now(), key }, data) });
+    return set('local', { ['pos:' + hash(key)]: Object.assign({ at: Date.now() }, data, { key }) });
   }
   function clearPosition(key) {
     return remove('local', 'pos:' + hash(key));
@@ -205,6 +208,51 @@
       .sort((a, b) => ((a.site || '') + a.title).localeCompare((b.site || '') + b.title));
   }
 
+  async function laterVideos() {
+    return (await get('local', 'later')).later || [];
+  }
+  async function saveLater(info) {
+    const list = await laterVideos();
+    const key = videoKey(info.url);
+    if (!list.some((v) => videoKey(v.url) === key)) list.unshift({ url: info.url, title: info.title, at: Date.now() });
+    await set('local', { later: list });
+  }
+  async function removeLater(url) {
+    await set('local', { later: (await laterVideos()).filter((v) => v.url !== url) });
+  }
+  async function exportBackup() {
+    return { format: 'video-drift', version: 1, settings: await getSettings(), history: await allPositions(), bookmarks: await allBookmarks(), later: await laterVideos() };
+  }
+  async function importBackup(data) {
+    const validUrl = (u) => { try { return ['http:', 'https:'].includes(new URL(u).protocol); } catch { return false; } };
+    if (!data || data.format !== 'video-drift' || data.version !== 1 ||
+        !['history', 'bookmarks', 'later'].every((k) => Array.isArray(data[k]) && data[k].length <= 10000)) throw new Error('Invalid backup');
+    for (const p of data.history) if (!validUrl(p.url) || !Number.isFinite(p.t) || !Number.isFinite(p.d)) throw new Error('Invalid history');
+    for (const r of data.bookmarks) if (!validUrl(r.url) || typeof r.key !== 'string' || !Array.isArray(r.items) || r.items.length > 10000 || r.items.some((b) => !Number.isFinite(b.t) || typeof b.note !== 'string')) throw new Error('Invalid bookmarks');
+    for (const v of data.later) if (!validUrl(v.url)) throw new Error('Invalid saved video');
+    // Validate the entire file before writing. Restore merges into existing collections.
+    if (data.settings && typeof data.settings === 'object') {
+      const patch = {};
+      for (const k of ['autoResume', 'rememberHistory', 'hoverButton']) if (typeof data.settings[k] === 'boolean') patch[k] = data.settings[k];
+      for (const [k, lo, hi] of [['opacity',30,100],['subtitleSize',12,36],['subtitleBackground',0,100],['subtitleOffset',16,160]]) if (Number.isFinite(data.settings[k])) patch[k] = Math.max(lo, Math.min(hi, data.settings[k]));
+      if (['page','window'].includes(data.settings.floatMode)) patch.floatMode = data.settings.floatMode;
+      if (data.settings.buttons && typeof data.settings.buttons === 'object') { patch.buttons = {}; for (const k of Object.keys(DEFAULTS.buttons)) if (typeof data.settings.buttons[k] === 'boolean') patch.buttons[k] = data.settings.buttons[k]; }
+      await saveSettings(patch);
+    }
+    for (const p of data.history) {
+      const key = videoKey(p.url), old = await getPosition(key);
+      if (!old || (p.at || 0) > (old.at || 0)) await savePosition(key, p);
+    }
+    for (const r of data.bookmarks) {
+      const key = r.key, old = await getBookmarks(key);
+      const rec = old || Object.assign({}, r, { key, items: [] });
+      for (const item of r.items) if (!rec.items.some((b) => b.t === item.t && b.note === item.note)) rec.items.push(item);
+      rec.items.sort((a,b) => a.t-b.t);
+      await putBookmarks(key, rec);
+    }
+    for (const v of data.later.slice().reverse()) await saveLater(v);
+  }
+
   function toMarkdown(records, heading) {
     const date = new Date().toISOString().slice(0, 10);
     const lines = ['# ' + heading, '', '_' + date + '_', ''];
@@ -224,7 +272,7 @@
   root.VideoDrift = {
     api, DEFAULTS, SPEED_MIN, SPEED_MAX, VOLUME_PRESETS,
     hash, videoKey, timeLink, fmtTime,
-    getSettings, saveSettings,
+    getSettings, saveSettings, laterVideos, saveLater, removeLater, exportBackup, importBackup,
     getPosition, savePosition, clearPosition, allPositions, clearHistory,
     getBookmarks, addBookmark, removeBookmark, changeBookmark, bookmarkId, allBookmarks, toMarkdown
   };

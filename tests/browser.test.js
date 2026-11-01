@@ -17,11 +17,12 @@ async function setup(t, lang = 'en', active = false) {
     res.end(fs.readFileSync(file));
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => { server.closeAllConnections(); await new Promise((r) => server.close(r)); });
   const browser = await chromium.launch({
     executablePath: process.env.CHROMIUM_PATH || undefined,
     args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']
   });
-  t.after(async () => { await browser.close(); await new Promise((r) => server.close(r)); });
+  t.after(async () => { await browser.close(); });
   const page = await browser.newPage({ viewport: { width: 800, height: 700 } });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -51,7 +52,7 @@ async function setup(t, lang = 'en', active = false) {
     };
     for (const area of ['local', 'sync']) api.storage[area] = {
       get: (keys, cb) => cb(structuredClone(keys == null ? data[area] : Object.fromEntries([].concat(keys).filter((k) => k in data[area]).map((k) => [k, data[area][k]])))),
-      set: (obj, cb) => { const changes = {}; for (const k in obj) changes[k] = { newValue: obj[k], oldValue: data[area][k] }; Object.assign(data[area], structuredClone(obj)); cb(); listeners.forEach((fn) => fn(changes, area)); },
+      set: (obj, cb) => { const changes = {}; for (const k in obj) changes[k] = { newValue: obj[k], oldValue: data[area][k] }; Object.assign(data[area], structuredClone(obj)); if (cb) cb(); listeners.forEach((fn) => fn(changes, area)); },
       remove: (keys, cb) => { [].concat(keys).forEach((k) => delete data[area][k]); cb(); }
     };
     window.chrome = api;
@@ -156,6 +157,16 @@ test('content: delayed metadata seeks saved link; mini player returns the origin
   await page.locator('video-drift-player').waitFor();
   assert.equal(await page.locator('video-drift-player video').count(), 1);
   assert.match(await page.locator('video-drift-player .fl-subs').innerText(), /Hello subtitles/);
+  await page.getByRole('button', { name: 'More controls', exact: true }).click();
+  await page.evaluate(() => {
+    const root = document.querySelector('video-drift-player').shadowRoot;
+    const video = root.querySelector('video'), loop = [...root.querySelectorAll('button')].find((b) => b.title === 'A–B');
+    video.currentTime = 20; loop.click(); video.currentTime = 30; loop.click(); video.currentTime = 31; video.dispatchEvent(new Event('timeupdate'));
+  });
+  assert.equal(await page.locator('video-drift-player video').evaluate((v) => v.currentTime), 20);
+  await page.evaluate(async () => { await VideoDrift.saveSettings({ subtitleSize: 28 }); });
+  assert.equal(await page.locator('video-drift-player .fl-subs').evaluate((el) => el.style.fontSize), '28px');
+  await page.locator('video-drift-player').screenshot({ path: '/tmp/video-drift-2-player.png' });
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   assert.equal(await page.locator('.player > video').count(), 1);
   assert.equal(await page.locator('video-drift-player').count(), 0);
@@ -165,5 +176,63 @@ test('content: delayed metadata seeks saved link; mini player returns the origin
   await page.evaluate(async () => { await VideoDrift.saveSettings({ rememberHistory: false }); await VideoDrift.clearHistory(); });
   await page.evaluate(() => document.querySelector('video').dispatchEvent(new Event('pause')));
   assert.equal(await page.evaluate(async () => (await VideoDrift.allPositions()).length), 0);
+  assert.deepEqual(errors, []);
+});
+
+test('full library filters sites, saves edits, removes and restores watch-later entries', async (t) => {
+  const { page, base, errors } = await setup(t);
+  await page.goto(base + '/extension/library/library.html');
+  await page.waitForFunction(() => window.VideoDrift);
+  await seed(page);
+  await page.evaluate(() => VideoDrift.saveLater({ title: 'Saved lesson', url: 'https://example.com/later' }));
+  await page.getByRole('button', { name: 'Watch later', exact: true }).click();
+  await page.getByRole('link', { name: 'Saved lesson' }).waitFor();
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  await page.locator('#empty').waitFor();
+  await page.getByRole('button', { name: 'Undo deletion' }).click();
+  await page.getByRole('link', { name: 'Saved lesson' }).waitFor();
+  await page.getByRole('button', { name: 'Bookmarks', exact: true }).click();
+  await page.locator('#site').selectOption('youtube.com');
+  assert.equal(await page.locator('#list article').count(), 1);
+  await page.getByRole('textbox', { name: 'Edit note' }).fill('Changed in library');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.waitForFunction(async () => (await VideoDrift.getBookmarks('youtube:test')).items[0].note === 'Changed in library');
+  await page.screenshot({ path: '/tmp/video-drift-2-library.png' });
+  assert.deepEqual(errors, []);
+});
+
+ test('PlayerJS subtitle nodes are discovered late, replaced and hidden without stale text', async (t) => {
+  const { page, base, errors } = await setup(t);
+  await page.goto(base + '/fixture');
+  await page.addScriptTag({ path: path.join(root, 'extension/shared/store.js') });
+  await page.evaluate(async () => {
+    document.querySelector('.ytp-caption-window-container').remove();
+    document.querySelector('.player').id = 'oframecdnplayer';
+    const v = document.querySelector('video');
+    Object.defineProperties(v, { duration: { value: 600 }, readyState: { value: 1 } });
+    v.play = async () => {};
+    await VideoDrift.saveSettings({ floatMode: 'page' });
+  });
+  await page.addScriptTag({ path: path.join(root, 'extension/content/content.js') });
+  await page.keyboard.press('Alt+Shift+p');
+  await page.locator('video-drift-player').waitFor();
+  await page.evaluate(() => {
+    const cue = document.createElement('pjsdiv');
+    cue.style.cssText = 'position:absolute;bottom:50px;left:40px;display:block';
+    cue.textContent = 'PlayerJS first cue';
+    document.querySelector('#oframecdnplayer').append(cue);
+  });
+  await page.waitForFunction(() => document.querySelector('video-drift-player').shadowRoot.querySelector('.fl-subs').textContent === 'PlayerJS first cue');
+  await page.evaluate(() => { const old = document.querySelector('pjsdiv'); const next = old.cloneNode(); next.textContent = 'Replacement cue'; old.replaceWith(next); });
+  await page.waitForFunction(() => document.querySelector('video-drift-player').shadowRoot.querySelector('.fl-subs').textContent === 'Replacement cue');
+  await page.evaluate(() => document.querySelector('pjsdiv').style.display = 'none');
+  await page.waitForFunction(() => document.querySelector('video-drift-player').shadowRoot.querySelector('.fl-subs').textContent === '');
+  await page.evaluate(() => {
+    const cue = document.querySelector('pjsdiv');
+    cue.id = 'pjs_cdnplayer_subtitle';
+    cue.style.cssText = 'position:absolute;width:100%;left:0;top:443px;bottom:auto;display:block;text-align:center';
+    cue.textContent = 'Named cue outside stale video bounds';
+  });
+  await page.waitForFunction(() => document.querySelector('video-drift-player').shadowRoot.querySelector('.fl-subs').textContent === 'Named cue outside stale video bounds');
   assert.deepEqual(errors, []);
 });
