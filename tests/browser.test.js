@@ -227,5 +227,12 @@ test('full library filters sites, saves edits, removes and restores watch-later 
   await page.waitForFunction(() => document.querySelector('video-drift-player').shadowRoot.querySelector('.fl-subs').textContent === 'Replacement cue');
   await page.evaluate(() => document.querySelector('pjsdiv').style.display = 'none');
   await page.waitForFunction(() => document.querySelector('video-drift-player').shadowRoot.querySelector('.fl-subs').textContent === '');
+  await page.evaluate(() => {
+    const cue = document.querySelector('pjsdiv');
+    cue.id = 'pjs_cdnplayer_subtitle';
+    cue.style.cssText = 'position:absolute;width:100%;left:0;top:443px;bottom:auto;display:block;text-align:center';
+    cue.textContent = 'Named cue outside stale video bounds';
+  });
+  await page.waitForFunction(() => document.querySelector('video-drift-player').shadowRoot.querySelector('.fl-subs').textContent === 'Named cue outside stale video bounds');
   assert.deepEqual(errors, []);
 });

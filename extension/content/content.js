@@ -438,6 +438,7 @@
 
   // Site subtitle containers that live outside the <video> element.
   const SUB_SELECTORS = [
+    '[id^="pjs_"][id$="_subtitle"]',
     '#oframecdnplayer > pjsdiv[style*="bottom: 50px"]',
     '#oframecdnplayer > pjsdiv[style*="bottom: 40px"]',
     '.pjsdiv.subtitles', '.b-simple_text_decor__subtitle', '.text-subtitle',
@@ -460,7 +461,9 @@
           if (el === state.placeholder || el.contains(state.placeholder) || el.closest('video-drift-player')) continue;
           const css = getComputedStyle(el);
           if (el.closest('select, [role=menu], [role=listbox], .cdnplayer-subtitles-menu') || css.display === 'none' || css.visibility === 'hidden' || css.opacity === '0') continue;
-          if (overlaps(el)) return el;
+          const player = el.closest('[id^="oframe"]');
+          const playerJsCue = el.matches('[id^="pjs_"][id$="_subtitle"]') && player && player.contains(state.placeholder);
+          if (playerJsCue || overlaps(el)) return el;
         }
       }
     }
