@@ -25,6 +25,8 @@ Video Drift pops any web video into a floating window that stays on top while yo
 - Floating window with its own controls (Document Picture-in-Picture), native PiP as a fallback, or a mini player over the page
 - Subtitles drawn by the site (YouTube, Netflix, Video.js, Plyr, JW Player and more) stay with the video
 - Remembers the playback position of every video and offers *Continue from 12:34?*
+- **Continue** tab: recent unfinished videos with progress and a link to the saved moment. History stays on this device; remove individual videos, clear the list, or disable recording in Settings
+- **Bookmarks** tab: all saved videos and notes, searchable by title, site or note. Edit notes, open a saved moment, and export one video or everything to Markdown. Available even on a tab without a video
 - Bookmarks with notes to the frame; export one video or everything to Markdown for Obsidian or Notion
 - Copy a link that opens the video at the current second
 - Seek bar, speed 0.25×–4×, volume presets and hotkeys right in the player
@@ -68,3 +70,18 @@ Video Drift collects no data and sends nothing anywhere: everything runs on your
 ## License
 
 [MIT](LICENSE) © vkardin
+
+## Development checks
+
+```bash
+npm ci
+npx playwright install chromium
+npm test
+python3 tools/build.py
+```
+
+The tests cover legacy storage, sync quota fallback, history, bookmark editing and search,
+Markdown downloads, EN/RU/UK popup layouts, delayed media metadata, and returning the
+video from the in-page player with mirrored subtitles. Browser tests use local fixtures
+with extension API and media state stubs; live sites, real Document PiP and Firefox
+still need manual checks. Set `CHROMIUM_PATH` to use an existing Chromium executable.

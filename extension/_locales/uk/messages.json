@@ -166,5 +166,77 @@
   },
   "fitBlocked": {
     "message": "Браузер не дав змінити розмір вікна. Потягніть за край вікна."
+  },
+  "navigation": {
+    "message": "Розділи Video Drift"
+  },
+  "tabCurrent": {
+    "message": "Плеєр"
+  },
+  "tabHistory": {
+    "message": "Продовжити"
+  },
+  "clearHistory": {
+    "message": "Очистити"
+  },
+  "historyHint": {
+    "message": "Збережено на цьому пристрої. Переглянуті до кінця відео зникають зі списку."
+  },
+  "historyEmpty": {
+    "message": "Подивись відео кілька секунд — воно з’явиться тут."
+  },
+  "searchBookmarks": {
+    "message": "Пошук за відео та нотатками"
+  },
+  "searchEmpty": {
+    "message": "За запитом нічого не знайдено."
+  },
+  "libraryEmpty": {
+    "message": "Збережи момент у відео — він буде тут навіть після закриття вкладки."
+  },
+  "continueVideo": {
+    "message": "Продовжити перегляд"
+  },
+  "watchProgress": {
+    "message": "Прогрес перегляду"
+  },
+  "continueFrom": {
+    "message": "Продовжити з $1"
+  },
+  "removeHistory": {
+    "message": "Видалити з історії"
+  },
+  "editNote": {
+    "message": "Редагувати нотатку"
+  },
+  "noNote": {
+    "message": "Без нотатки"
+  },
+  "save": {
+    "message": "Зберегти"
+  },
+  "cancel": {
+    "message": "Скасувати"
+  },
+  "confirmClearHistory": {
+    "message": "Очистити історію на цьому пристрої? Закладки залишаться. Відео, які ще відтворюються, можуть з’явитися знову."
+  },
+  "setRememberHistory": {
+    "message": "Зберігати історію перегляду на цьому пристрої"
+  },
+  "actionFailed": {
+    "message": "Не вдалося виконати дію. Спробуй ще раз."
+  },
+  "modePage": {
+    "message": "Мініплеєр · усередині цієї сторінки"
+  },
+  "modeNative": {
+    "message": "Картинка в картинці · керування браузера"
+  },
+  "modeWindow": {
+    "message": "Окреме вікно · поверх інших вікон"
+  },
+  "modeReady": {
+    "message": "Можна винести відео у вікно"
   }
 }
