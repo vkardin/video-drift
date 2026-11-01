@@ -85,6 +85,8 @@ with extension API and media state stubs; live sites, real Document PiP and Fire
 still need manual checks. Set `CHROMIUM_PATH` to use an existing Chromium executable.
 
 <!-- project-family:start -->
+
+[**vkardin / tools — all projects ↗**](https://vkardin.github.io/video-glow/projects/)
 ## More tools by vkardin
 
 | Project | Projects |
