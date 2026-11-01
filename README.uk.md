@@ -73,9 +73,11 @@ Video Drift не збирає даних і нічого нікуди не на�
 [MIT](LICENSE) © vkardin
 
 <!-- project-family:start -->
+
+[**vkardin / tools — каталог усіх проєктів ↗**](https://vkardin.github.io/video-glow/projects/)
 ## Інші інструменти від vkardin
 
-| Project | Проєкти |
+| Проєкт | Опис |
 | --- | --- |
 | **[Video Glow](https://vkardin.github.io/video-glow/)** | Підсвічування навколо відео в колір кадру. М’яке світло, LED-стрічка й колір кімнати. [GitHub](https://github.com/vkardin/video-glow) |
 | **[Leveler](https://vkardin.github.io/leveler/)** | Рівна гучність, розбірливі діалоги, еквалайзер і керування швидкістю. [GitHub](https://github.com/vkardin/leveler) |
