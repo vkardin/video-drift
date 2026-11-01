@@ -166,5 +166,77 @@
   },
   "fitBlocked": {
     "message": "The browser did not let the window be resized. Drag its edge."
+  },
+  "navigation": {
+    "message": "Video Drift sections"
+  },
+  "tabCurrent": {
+    "message": "Player"
+  },
+  "tabHistory": {
+    "message": "Continue"
+  },
+  "clearHistory": {
+    "message": "Clear"
+  },
+  "historyHint": {
+    "message": "Saved on this device. Finished videos disappear from this list."
+  },
+  "historyEmpty": {
+    "message": "Watch a video for a few seconds and it will appear here."
+  },
+  "searchBookmarks": {
+    "message": "Search videos and notes"
+  },
+  "searchEmpty": {
+    "message": "Nothing matches your search."
+  },
+  "libraryEmpty": {
+    "message": "Save a moment in a video and find it here, even after closing the tab."
+  },
+  "continueVideo": {
+    "message": "Continue watching"
+  },
+  "watchProgress": {
+    "message": "Watch progress"
+  },
+  "continueFrom": {
+    "message": "Continue from $1"
+  },
+  "removeHistory": {
+    "message": "Remove from history"
+  },
+  "editNote": {
+    "message": "Edit note"
+  },
+  "noNote": {
+    "message": "No note"
+  },
+  "save": {
+    "message": "Save"
+  },
+  "cancel": {
+    "message": "Cancel"
+  },
+  "confirmClearHistory": {
+    "message": "Clear viewing history on this device? Bookmarks will be kept. Videos still playing can appear again."
+  },
+  "setRememberHistory": {
+    "message": "Remember viewing history on this device"
+  },
+  "actionFailed": {
+    "message": "Could not complete the action. Please try again."
+  },
+  "modePage": {
+    "message": "Mini player · inside this page"
+  },
+  "modeNative": {
+    "message": "Picture-in-Picture · browser controls"
+  },
+  "modeWindow": {
+    "message": "Floating window · stays on top"
+  },
+  "modeReady": {
+    "message": "Ready to float the video"
   }
 }

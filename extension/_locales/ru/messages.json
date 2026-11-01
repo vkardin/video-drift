@@ -166,5 +166,77 @@
   },
   "fitBlocked": {
     "message": "Браузер не дал изменить размер окна. Потяните за край окна."
+  },
+  "navigation": {
+    "message": "Разделы Video Drift"
+  },
+  "tabCurrent": {
+    "message": "Плеер"
+  },
+  "tabHistory": {
+    "message": "Продолжить"
+  },
+  "clearHistory": {
+    "message": "Очистить"
+  },
+  "historyHint": {
+    "message": "Сохранено на этом устройстве. Досмотренные видео исчезают из списка."
+  },
+  "historyEmpty": {
+    "message": "Посмотри видео несколько секунд — оно появится здесь."
+  },
+  "searchBookmarks": {
+    "message": "Поиск по видео и заметкам"
+  },
+  "searchEmpty": {
+    "message": "По запросу ничего не найдено."
+  },
+  "libraryEmpty": {
+    "message": "Сохрани момент в видео — он будет здесь даже после закрытия вкладки."
+  },
+  "continueVideo": {
+    "message": "Продолжить просмотр"
+  },
+  "watchProgress": {
+    "message": "Прогресс просмотра"
+  },
+  "continueFrom": {
+    "message": "Продолжить с $1"
+  },
+  "removeHistory": {
+    "message": "Удалить из истории"
+  },
+  "editNote": {
+    "message": "Редактировать заметку"
+  },
+  "noNote": {
+    "message": "Без заметки"
+  },
+  "save": {
+    "message": "Сохранить"
+  },
+  "cancel": {
+    "message": "Отмена"
+  },
+  "confirmClearHistory": {
+    "message": "Очистить историю на этом устройстве? Закладки останутся. Видео, которые ещё воспроизводятся, могут появиться снова."
+  },
+  "setRememberHistory": {
+    "message": "Сохранять историю просмотра на этом устройстве"
+  },
+  "actionFailed": {
+    "message": "Не удалось выполнить действие. Попробуй ещё раз."
+  },
+  "modePage": {
+    "message": "Мини-плеер · внутри этой страницы"
+  },
+  "modeNative": {
+    "message": "Картинка в картинке · управление браузера"
+  },
+  "modeWindow": {
+    "message": "Отдельное окно · поверх других окон"
+  },
+  "modeReady": {
+    "message": "Можно вынести видео в окно"
   }
 }

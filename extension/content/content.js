@@ -20,7 +20,8 @@
     subsObserver: null,
     lastSave: 0,
     resumeOffered: new Set(),
-    lastKey: null
+    lastKey: null,
+    linkSeeked: new Set()
   };
 
   F.getSettings().then((s) => { state.settings = s; });
@@ -67,7 +68,7 @@
   /* ---------- timecode memory ---------- */
 
   function savePos(v, force) {
-    if (!v || isAd()) return;
+    if (!v || isAd() || !state.settings.rememberHistory) return;
     const d = v.duration;
     if (!isFinite(d) || d < 30) return;
     const now = Date.now();
@@ -82,7 +83,7 @@
 
   async function offerResume(v) {
     const key = currentKey();
-    if (!state.settings.autoResume || state.resumeOffered.has(key) || isAd()) return;
+    if (!state.settings.autoResume || state.resumeOffered.has(key) || isAd() || hasExplicitTime()) return;
     const pos = await F.getPosition(key);
     if (!pos || pos.t < 5) return;
     if (pos.d && pos.t > pos.d - 10) return;
@@ -96,10 +97,10 @@
     v.__videoDriftHooked = true;
     v.addEventListener('timeupdate', () => savePos(v, false));
     v.addEventListener('pause', () => savePos(v, true));
-    v.addEventListener('loadedmetadata', () => setTimeout(() => offerResume(v), 800));
+    v.addEventListener('loadedmetadata', () => { seekFromHash(v); setTimeout(() => offerResume(v), 800); });
     v.addEventListener('mouseenter', () => showHoverButton(v));
     v.addEventListener('mousemove', () => showHoverButton(v));
-    if (v.readyState > 0) setTimeout(() => offerResume(v), 800);
+    if (v.readyState > 0) setTimeout(() => { seekFromHash(v); offerResume(v); }, 800);
   }
 
   function scan() {
@@ -108,7 +109,7 @@
     if (key !== state.lastKey) {
       state.lastKey = key;
       const v = pickVideo();
-      if (v && v.readyState > 0) setTimeout(() => offerResume(v), 1200);
+      if (v && v.readyState > 0) setTimeout(() => { seekFromHash(v); offerResume(v); }, 1200);
     }
   }
   scan();
@@ -116,13 +117,24 @@
     .observe(document.documentElement, { childList: true, subtree: true });
   window.addEventListener('pagehide', () => { const v = pickVideo(); if (v) savePos(v, true); });
 
-  // Honour #t=123 links produced by "Copy link with timecode" on generic sites.
-  (function seekFromHash() {
-    const m = /(?:^#|&)t=(\d+)/.exec(location.hash);
-    if (!m) return;
-    const go = () => { const v = pickVideo(); if (v) { v.currentTime = +m[1]; state.resumeOffered.add(currentKey()); } };
-    setTimeout(go, 1500);
-  })();
+  // Apply generic time links when media metadata actually arrives, even on slow pages.
+  function hasExplicitTime() {
+    const u = new URL(location.href);
+    return /(?:^#|&)t=\d+/.test(u.hash) || ['t', 'start', 'time_continue'].some((k) => u.searchParams.has(k));
+  }
+  function seekFromHash(v) {
+    const m = /(?:^#|&)t=(\d+)(?:s)?(?:&|$)/.exec(location.hash);
+    const key = location.href;
+    if (!m || state.linkSeeked.has(key) || !v || !v.readyState || isAd()) return;
+    const seconds = Number(m[1]);
+    if (!Number.isFinite(v.duration) || seconds > v.duration) return;
+    try {
+      v.currentTime = seconds;
+      state.linkSeeked.add(key);
+      state.resumeOffered.add(currentKey());
+    } catch (e) { /* retry after the next metadata event */ }
+  }
+  window.addEventListener('hashchange', () => seekFromHash(pickVideo()));
 
   /* ---------- in-page overlay (toast, resume bar, hover button) ---------- */
 

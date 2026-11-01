@@ -8,6 +8,7 @@
   const DEFAULTS = {
     opacity: 100,
     autoResume: true,
+    rememberHistory: true,
     hoverButton: true,
     floatMode: 'window', // 'window' (separate always-on-top window) or 'page' (mini player over the page)
     buttons: {
@@ -98,7 +99,7 @@
           const err = api.runtime.lastError;
           err ? reject(err) : resolve();
         });
-      } catch (e) { resolve(); }
+      } catch (e) { reject(e); }
     });
   }
   function remove(area, keys) {
@@ -127,27 +128,38 @@
     return (await get('local', k))[k] || null;
   }
   function savePosition(key, data) {
-    return set('local', { ['pos:' + hash(key)]: Object.assign({ at: Date.now() }, data) });
+    return set('local', { ['pos:' + hash(key)]: Object.assign({ at: Date.now(), key }, data) });
   }
   function clearPosition(key) {
     return remove('local', 'pos:' + hash(key));
+  }
+
+  async function allPositions() {
+    const data = await get('local', null);
+    return Object.entries(data)
+      .filter(([k, p]) => k.startsWith('pos:') && p && /^https?:\/\//i.test(p.url || '') &&
+        Number.isFinite(p.t) && Number.isFinite(p.d) && p.t >= 5 && p.d >= 30 && p.t <= p.d - 10)
+      .map(([, p]) => Object.assign({}, p, { key: p.key || videoKey(p.url) }))
+      .sort((a, b) => (b.at || 0) - (a.at || 0));
+  }
+
+  async function clearHistory() {
+    const data = await get('local', null);
+    await remove('local', Object.keys(data).filter((k) => k.startsWith('pos:')));
   }
 
   // Bookmarks and frame notes live in storage.sync (falls back to local when quota is hit):
   // bm:<hash> -> { key, url, title, site, items: [{ t, note, at }] }
   async function getBookmarks(key) {
     const k = 'bm:' + hash(key);
-    const s = (await get('sync', k))[k];
-    if (s) return s;
-    return (await get('local', k))[k] || null;
+    // A local copy exists only after a failed sync write and is the newer version.
+    const local = (await get('local', k))[k];
+    if (local) return local;
+    return (await get('sync', k))[k] || null;
   }
   async function putBookmarks(key, rec) {
     const k = 'bm:' + hash(key);
-    if (!rec.items.length) {
-      await remove('sync', k);
-      await remove('local', k);
-      return;
-    }
+    // Keep an empty local record on sync failure so deleted items cannot reappear.
     try {
       await set('sync', { [k]: rec });
       await remove('local', k);
@@ -159,7 +171,7 @@
     const rec = (await getBookmarks(key)) || { key, url: info.url, title: info.title, site: info.site, items: [] };
     rec.url = info.url || rec.url;
     rec.title = info.title || rec.title;
-    rec.items.push({ t: Math.floor(t), note: (note || '').trim(), at: Date.now() });
+    rec.items.push({ id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Array.from(crypto.getRandomValues(new Uint32Array(4)), (n) => n.toString(16)).join('-'), t: Math.floor(t), note: (note || '').trim(), at: Date.now() });
     rec.items.sort((a, b) => a.t - b.t);
     await putBookmarks(key, rec);
     return rec;
@@ -171,13 +183,26 @@
     await putBookmarks(key, rec);
     return rec;
   }
+  function bookmarkId(item) {
+    return item.id || JSON.stringify([item.at, item.t, item.note]);
+  }
+  async function changeBookmark(key, id, note) {
+    const rec = await getBookmarks(key);
+    if (!rec) return;
+    const index = rec.items.findIndex((item) => bookmarkId(item) === id);
+    if (index < 0) return;
+    if (note === null) rec.items.splice(index, 1);
+    else rec.items[index].note = note.trim();
+    await putBookmarks(key, rec);
+  }
   async function allBookmarks() {
     const [s, l] = await Promise.all([get('sync', null), get('local', null)]);
     const out = {};
-    for (const src of [l, s]) {
+    for (const src of [s, l]) {
       for (const k of Object.keys(src)) if (k.startsWith('bm:')) out[k] = src[k];
     }
-    return Object.values(out).sort((a, b) => (a.site + a.title).localeCompare(b.site + b.title));
+    return Object.values(out).filter((rec) => rec && Array.isArray(rec.items) && rec.items.length)
+      .sort((a, b) => ((a.site || '') + a.title).localeCompare((b.site || '') + b.title));
   }
 
   function toMarkdown(records, heading) {
@@ -200,7 +225,7 @@
     api, DEFAULTS, SPEED_MIN, SPEED_MAX, VOLUME_PRESETS,
     hash, videoKey, timeLink, fmtTime,
     getSettings, saveSettings,
-    getPosition, savePosition, clearPosition,
-    getBookmarks, addBookmark, removeBookmark, allBookmarks, toMarkdown
+    getPosition, savePosition, clearPosition, allPositions, clearHistory,
+    getBookmarks, addBookmark, removeBookmark, changeBookmark, bookmarkId, allBookmarks, toMarkdown
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
