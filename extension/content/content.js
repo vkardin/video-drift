@@ -438,6 +438,9 @@
 
   // Site subtitle containers that live outside the <video> element.
   const SUB_SELECTORS = [
+    '#oframecdnplayer > pjsdiv[style*="bottom: 50px"]',
+    '#oframecdnplayer > pjsdiv[style*="bottom: 40px"]',
+    '.pjsdiv.subtitles', '.b-simple_text_decor__subtitle', '.text-subtitle',
     '.ytp-caption-window-container', '.player-timedtext', '.vjs-text-track-display',
     '.plyr__captions', '.jw-captions', '.shaka-text-container', '[data-testid="cueBoxRowTextCue"]',
     '.dv-player-fullscreen [class*="captions"]', '[class*="subtitle"]', '[class*="caption"]'
@@ -453,8 +456,12 @@
     let node = state.placeholder && state.placeholder.parentElement;
     for (let i = 0; node && i < 6; i++, node = node.parentElement) {
       for (const sel of SUB_SELECTORS) {
-        const el = node.querySelector(sel);
-        if (el && el !== state.placeholder && !el.contains(state.placeholder) && overlaps(el)) return el;
+        for (const el of node.querySelectorAll(sel)) {
+          if (el === state.placeholder || el.contains(state.placeholder) || el.closest('video-drift-player')) continue;
+          const css = getComputedStyle(el);
+          if (el.closest('select, [role=menu], [role=listbox], .cdnplayer-subtitles-menu') || css.display === 'none' || css.visibility === 'hidden' || css.opacity === '0') continue;
+          if (overlaps(el)) return el;
+        }
       }
     }
     return null;
@@ -464,7 +471,7 @@
     let src = findSubtitleSource();
     const render = () => {
       if (!state.video) return;
-      if (!src || !src.isConnected) src = findSubtitleSource();
+      if (!src || !src.isConnected || getComputedStyle(src).display === 'none' || getComputedStyle(src).visibility === 'hidden') src = findSubtitleSource();
       const native = Array.from(state.video.textTracks || []).filter((track) => track.mode === 'showing').flatMap((track) => Array.from(track.activeCues || []).map((cue) => cue.text)).join('\n');
       const text = native || (src ? src.innerText.trim() : '');
       if (target.textContent !== text) {
@@ -474,12 +481,13 @@
     };
     for (const track of Array.from(state.video.textTracks || [])) { track.addEventListener('cuechange', render); state.cleanup.push(() => track.removeEventListener('cuechange', render)); }
     let queued = false;
-    state.subsObserver = new MutationObserver(() => {
+    state.subsObserver = new MutationObserver((mutations) => {
+      if (!mutations.some((m) => m.type !== 'attributes' || (src && (m.target === src || m.target.contains(src))) || m.target.matches(SUB_SELECTORS.join(',')))) return;
       if (queued) return;
       queued = true;
       requestAnimationFrame(() => { queued = false; render(); });
     });
-    state.subsObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+    state.subsObserver.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
     render();
   }
 

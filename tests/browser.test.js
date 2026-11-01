@@ -200,3 +200,32 @@ test('full library filters sites, saves edits, removes and restores watch-later 
   await page.screenshot({ path: '/tmp/video-drift-2-library.png' });
   assert.deepEqual(errors, []);
 });
+
+ test('PlayerJS subtitle nodes are discovered late, replaced and hidden without stale text', async (t) => {
+  const { page, base, errors } = await setup(t);
+  await page.goto(base + '/fixture');
+  await page.addScriptTag({ path: path.join(root, 'extension/shared/store.js') });
+  await page.evaluate(async () => {
+    document.querySelector('.ytp-caption-window-container').remove();
+    document.querySelector('.player').id = 'oframecdnplayer';
+    const v = document.querySelector('video');
+    Object.defineProperties(v, { duration: { value: 600 }, readyState: { value: 1 } });
+    v.play = async () => {};
+    await VideoDrift.saveSettings({ floatMode: 'page' });
+  });
+  await page.addScriptTag({ path: path.join(root, 'extension/content/content.js') });
+  await page.keyboard.press('Alt+Shift+p');
+  await page.locator('video-drift-player').waitFor();
+  await page.evaluate(() => {
+    const cue = document.createElement('pjsdiv');
+    cue.style.cssText = 'position:absolute;bottom:50px;left:40px;display:block';
+    cue.textContent = 'PlayerJS first cue';
+    document.querySelector('#oframecdnplayer').append(cue);
+  });
+  await page.waitForFunction(() => document.querySelector('video-drift-player').shadowRoot.querySelector('.fl-subs').textContent === 'PlayerJS first cue');
+  await page.evaluate(() => { const old = document.querySelector('pjsdiv'); const next = old.cloneNode(); next.textContent = 'Replacement cue'; old.replaceWith(next); });
+  await page.waitForFunction(() => document.querySelector('video-drift-player').shadowRoot.querySelector('.fl-subs').textContent === 'Replacement cue');
+  await page.evaluate(() => document.querySelector('pjsdiv').style.display = 'none');
+  await page.waitForFunction(() => document.querySelector('video-drift-player').shadowRoot.querySelector('.fl-subs').textContent === '');
+  assert.deepEqual(errors, []);
+});
