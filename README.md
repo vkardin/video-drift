@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/img/logo.svg" width="96" alt="Video Drift"></p>
+<p align="center"><img src=".github/assets/project-banner.svg" alt="Video Drift by vkardin" width="100%"></p>
 
 <h1 align="center">Video Drift</h1>
 
@@ -64,12 +64,6 @@ Video Drift collects no data and sends nothing anywhere: everything runs on your
 | [`store/`](store) | Store listing texts and graphics specification |
 | [`tools/`](tools) | `build.py` packs the Chrome and Firefox zips |
 
-## More from the author
-
-- [Video Glow](https://vkardin.github.io/video-glow/): ambient light in the colours of the picture around any video in your browser.
-- [Leveler](https://vkardin.github.io/leveler/): evens out the loudness of any video: quiet dialogue louder, explosions softer.
-- [Snapt](https://vkardin.github.io/snapt/): a fast, open-source screenshot tool for Windows, macOS and Linux.
-- [UNI](https://vkardin.github.io/uni-homebot/): your home server in Telegram, with apps, monitoring and a mini app.
 
 ## License
 
@@ -89,3 +83,16 @@ Markdown downloads, EN/RU/UK popup layouts, delayed media metadata, and returnin
 video from the in-page player with mirrored subtitles. Browser tests use local fixtures
 with extension API and media state stubs; live sites, real Document PiP and Firefox
 still need manual checks. Set `CHROMIUM_PATH` to use an existing Chromium executable.
+
+<!-- project-family:start -->
+## More tools by vkardin
+
+| Project | Projects |
+| --- | --- |
+| **[Video Glow](https://vkardin.github.io/video-glow/)** | Ambient light around web videos. Soft glow, LED strips and room colour. [GitHub](https://github.com/vkardin/video-glow) |
+| **[Leveler](https://vkardin.github.io/leveler/)** | Even loudness, clearer dialogue, an equalizer and playback speed controls. [GitHub](https://github.com/vkardin/leveler) |
+| **[Snapt](https://vkardin.github.io/snapt/)** | Capture, annotate and export. A Windows, macOS and Linux app, plus a browser extension. [GitHub](https://github.com/vkardin/snapt) |
+| **[UNI](https://vkardin.github.io/uni-homebot/)** | Your home server in Telegram: apps, monitoring, notifications and a Mini App. [GitHub](https://github.com/vkardin/uni-homebot) |
+
+[github.com/vkardin](https://github.com/vkardin) · Independent tools · open source
+<!-- project-family:end -->

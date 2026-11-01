@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/img/logo.svg" width="96" alt="Video Drift"></p>
+<p align="center"><img src=".github/assets/project-banner.svg" alt="Video Drift by vkardin" width="100%"></p>
 
 <h1 align="center">Video Drift</h1>
 
@@ -67,13 +67,20 @@ Video Drift не собирает данные и ничего никуда не
 | [`store/`](store) | Тексты для магазинов и спецификация графики |
 | [`tools/`](tools) | `build.py` собирает zip для Chrome и Firefox |
 
-## Другие проекты автора
-
-- [Video Glow](https://vkardin.github.io/video-glow/): фоновая подсветка в цветах картинки вокруг любого видео в браузере.
-- [Leveler](https://vkardin.github.io/leveler/): выравнивает громкость любого видео: тихие диалоги громче, взрывы тише.
-- [Snapt](https://vkardin.github.io/snapt/): быстрые скриншоты с открытым кодом для Windows, macOS и Linux.
-- [UNI](https://vkardin.github.io/uni-homebot/): домашний сервер в Telegram, с приложениями, мониторингом и мини-приложением.
 
 ## Лицензия
 
 [MIT](LICENSE) © vkardin
+
+<!-- project-family:start -->
+## Другие инструменты от vkardin
+
+| Project | Проекты |
+| --- | --- |
+| **[Video Glow](https://vkardin.github.io/video-glow/)** | Подсветка вокруг видео в цвет кадра. Мягкое свечение, LED-лента и цвет комнаты. [GitHub](https://github.com/vkardin/video-glow) |
+| **[Leveler](https://vkardin.github.io/leveler/)** | Ровная громкость, разборчивые диалоги, эквалайзер и управление скоростью. [GitHub](https://github.com/vkardin/leveler) |
+| **[Snapt](https://vkardin.github.io/snapt/)** | Скриншоты, стрелки и подписи. Приложение для Windows, macOS и Linux и расширение браузера. [GitHub](https://github.com/vkardin/snapt) |
+| **[UNI](https://vkardin.github.io/uni-homebot/)** | Домашний сервер в Telegram: приложения, мониторинг, уведомления и мини-приложение. [GitHub](https://github.com/vkardin/uni-homebot) |
+
+[github.com/vkardin](https://github.com/vkardin) · Независимые инструменты · открытый код
+<!-- project-family:end -->
