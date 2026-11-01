@@ -21,7 +21,9 @@
     lastSave: 0,
     resumeOffered: new Set(),
     lastKey: null,
-    linkSeeked: new Set()
+    linkSeeked: new Set(),
+    selected: null,
+    cleanup: []
   };
 
   F.getSettings().then((s) => { state.settings = s; });
@@ -41,6 +43,7 @@
 
   function pickVideo() {
     if (state.video) return state.video;
+    if (state.selected && state.selected.isConnected) return state.selected;
     let best = null, bestScore = 0;
     for (const v of videos()) {
       const r = v.getBoundingClientRect();
@@ -355,6 +358,32 @@
     root.appendChild(frame);
     document.documentElement.appendChild(host);
     state.floatHost = host;
+    F.api.storage.local.get('playerRect', (r) => {
+      if (state.floatHost !== host) return;
+      const rect = r.playerRect;
+      if (rect) {
+        frame.style.width = Math.min(Math.max(220, rect.width), innerWidth - 16) + 'px';
+        frame.style.height = Math.min(Math.max(124, rect.height), innerHeight - 16) + 'px';
+        host.style.left = Math.max(0, Math.min(rect.left, innerWidth - frame.offsetWidth)) + 'px';
+        host.style.top = Math.max(0, Math.min(rect.top, innerHeight - frame.offsetHeight)) + 'px';
+        host.style.right = host.style.bottom = 'auto';
+      }
+    });
+    const saveRect = () => {
+      const r = host.getBoundingClientRect();
+      F.api.storage.local.set({ playerRect: { width: r.width, height: r.height, left: r.left, top: r.top } });
+    };
+    host.addEventListener('pointerup', saveRect);
+    const resize = () => {
+      frame.style.maxWidth = Math.max(220, innerWidth - 16) + 'px';
+      frame.style.maxHeight = Math.max(124, innerHeight - 16) + 'px';
+      const r = host.getBoundingClientRect();
+      host.style.left = Math.max(0, Math.min(r.left, innerWidth - r.width)) + 'px';
+      host.style.top = Math.max(0, Math.min(r.top, innerHeight - r.height)) + 'px';
+      host.style.right = host.style.bottom = 'auto';
+    };
+    window.addEventListener('resize', resize);
+    state.cleanup.push(() => window.removeEventListener('resize', resize));
     state.ui = buildPlayer(document, frame, v, window, true);
     makeDraggable(host, state.ui.dragHandle);
     if (wasPlaying) v.play().catch(() => {});
@@ -388,6 +417,7 @@
 
   function teardown() {
     if (!state.mode) return;
+    state.cleanup.splice(0).forEach((fn) => fn());
     if (state.subsObserver) state.subsObserver.disconnect();
     state.subsObserver = null;
     reattachVideo();
@@ -433,13 +463,16 @@
   function mirrorSubtitles(target) {
     let src = findSubtitleSource();
     const render = () => {
+      if (!state.video) return;
       if (!src || !src.isConnected) src = findSubtitleSource();
-      const text = src ? src.innerText.trim() : '';
+      const native = Array.from(state.video.textTracks || []).filter((track) => track.mode === 'showing').flatMap((track) => Array.from(track.activeCues || []).map((cue) => cue.text)).join('\n');
+      const text = native || (src ? src.innerText.trim() : '');
       if (target.textContent !== text) {
         target.textContent = text;
         target.style.display = text ? '' : 'none';
       }
     };
+    for (const track of Array.from(state.video.textTracks || [])) { track.addEventListener('cuechange', render); state.cleanup.push(() => track.removeEventListener('cuechange', render)); }
     let queued = false;
     state.subsObserver = new MutationObserver(() => {
       if (queued) return;
@@ -484,7 +517,9 @@
       seek.style.setProperty('--p', (p * 100) + '%');
       timeEl.textContent = F.fmtTime(v.currentTime) + (isFinite(d) ? ' / ' + F.fmtTime(d) : '');
     };
-    v.addEventListener('timeupdate', () => ui && state.ui === ui && tick());
+    const updateTime = () => { if (ui && state.ui === ui) tick(); };
+    v.addEventListener('timeupdate', updateTime);
+    state.cleanup.push(() => v.removeEventListener('timeupdate', updateTime));
     mount.appendChild(wrap);
 
     const btn = (icon, title, fn, show) => {
@@ -492,6 +527,7 @@
       const el = doc.createElement('button');
       el.type = 'button';
       el.title = title;
+      el.setAttribute('aria-label', title);
       el.innerHTML = icon;
       el.addEventListener('click', (e) => { e.stopPropagation(); fn(el); });
       bar.appendChild(el);
@@ -511,6 +547,11 @@
     const playBtn = btn(ICONS.play, t('btnPlay'), () => { v.paused ? v.play() : v.pause(); }, b.play);
     btn(ICONS.back, t('btnBack'), () => { v.currentTime = Math.max(0, v.currentTime - 10); }, b.seek);
     btn(ICONS.fwd, t('btnForward'), () => { v.currentTime += 10; }, b.seek);
+    const more = doc.createElement('div'); more.className = 'fl-more';
+    const volume = doc.createElement('input'); volume.type = 'range'; volume.min = 0; volume.max = 1; volume.step = .05; volume.value = v.muted ? 0 : v.volume; volume.className = 'fl-range'; volume.title = t('volume'); volume.setAttribute('aria-label', t('volume')); volume.oninput = () => setVolume(v, +volume.value); if (b.volume !== false) bar.append(volume);
+    const toggle = btn('⋯', t('moreControls'), () => { more.hidden = !more.hidden; if (ui) ui.refresh(); });
+    more.hidden = true;
+    const before = [...bar.children];
     btn(ICONS.slower, t('btnSlower'), () => stepSpeed(v, -1), b.speed);
     const speedLbl = label('speed', t('btnSpeedReset'), () => setSpeed(v, 1), b.speed);
     btn(ICONS.faster, t('btnFaster'), () => stepSpeed(v, 1), b.speed);
@@ -541,9 +582,21 @@
       range.addEventListener('pointerdown', (e) => e.stopPropagation());
       bar.appendChild(range);
     }
+    [...bar.children].filter((el) => !before.includes(el)).forEach((el) => more.append(el));
+    panel.append(more);
     if (!inPage) btn(ICONS.fit, t('btnFit'), () => { if (state.fitWindow) state.fitWindow(); });
     btn(ICONS.close, t('btnClose'), () => closePlayer());
 
+    let loopStart = null, loopEnd = null;
+    const loopButton = doc.createElement('button'); loopButton.textContent = 'A–B'; loopButton.title = 'A–B';
+    loopButton.onclick = () => {
+      if (loopStart === null) { loopStart = v.currentTime; loopButton.textContent = 'B'; }
+      else if (loopEnd === null && v.currentTime > loopStart) { loopEnd = v.currentTime; loopButton.textContent = 'A–B ✓'; }
+      else { loopStart = loopEnd = null; loopButton.textContent = 'A–B'; }
+    };
+    more.append(loopButton);
+    const repeat = () => { if (loopEnd !== null && v.currentTime >= loopEnd) v.currentTime = loopStart; };
+    v.addEventListener('timeupdate', repeat); state.cleanup.push(() => v.removeEventListener('timeupdate', repeat));
     let toastTimer;
     ui = {
       dragHandle: wrap,
@@ -554,14 +607,19 @@
         toastTimer = setTimeout(() => toastEl.classList.remove('on'), 1600);
       },
       refresh() {
+        subs.style.fontSize = state.settings.subtitleSize + 'px';
+        subs.style.bottom = Math.max(state.settings.subtitleOffset, panel.offsetHeight + 16) + 'px';
+        subs.style.background = 'rgba(0,0,0,' + state.settings.subtitleBackground / 100 + ')';
         if (playBtn) playBtn.innerHTML = v.paused ? ICONS.play : ICONS.pause;
         if (speedLbl) speedLbl.textContent = v.playbackRate + '×';
+        volume.value = v.muted ? 0 : v.volume;
         if (volLbl) volLbl.textContent = (v.muted ? 0 : Math.round(v.volume * 100)) + '%';
         if (range) range.value = state.settings.opacity;
         tick();
       }
     };
-    ['play', 'pause', 'ratechange', 'volumechange'].forEach((ev) => v.addEventListener(ev, () => ui && state.ui === ui && ui.refresh()));
+    const update = () => { if (ui && state.ui === ui) ui.refresh(); };
+    ['play', 'pause', 'ratechange', 'volumechange'].forEach((ev) => { v.addEventListener(ev, update); state.cleanup.push(() => v.removeEventListener(ev, update)); });
     wrap.addEventListener('dblclick', (e) => { if (!e.target.closest('.fl-bar')) { v.paused ? v.play() : v.pause(); } });
     if (inPage) wrap.tabIndex = 0;
     (inPage ? wrap : win).addEventListener('keydown', (e) => {
@@ -574,6 +632,8 @@
     });
     if (!inPage) wrap.style.height = '100%';
     mirrorSubtitles(subs);
+    const panelResize = new ResizeObserver(() => { if (ui && state.ui === ui) ui.refresh(); });
+    panelResize.observe(panel); state.cleanup.push(() => panelResize.disconnect());
     ui.refresh();
     return ui;
   }
@@ -601,6 +661,7 @@
       floating: state.mode,
       bookmarks: bm ? bm.items : [],
       link: linkAt(v),
+      videos: videos().map((video, index) => ({ index, selected: video === v, label: (index + 1) + ' · ' + (video.getAttribute('aria-label') || video.title || pageInfo().title) })),
       docPip: !!window.documentPictureInPicture
     }));
   }
@@ -609,6 +670,7 @@
     const v = pickVideo();
     if (!v) return null;
     switch (msg.type) {
+      case 'selectVideo': { const selected = videos()[msg.index]; if (!selected || state.mode) return status(v); state.selected = selected; return status(selected); }
       case 'status': return status(v);
       case 'pip': return openPlayer(v);
       case 'bookmark': return bookmark(v, msg.note).then(() => status(v));
@@ -673,7 +735,7 @@
     .fl-prog:hover .fl-seek::-webkit-slider-thumb{transform:scale(1)}
     .fl-seek::-moz-range-thumb{width:10px;height:10px;border:0;border-radius:50%;background:#fff}
     .fl-time{font-size:11px;color:rgba(255,255,255,.75);font-variant-numeric:tabular-nums;white-space:nowrap}
-    .fl-bar{display:flex;align-items:center;gap:1px}
+    .fl-more{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding-top:5px}.fl-more[hidden]{display:none}.fl-more button{background:rgba(255,255,255,.1);color:white;border:0;border-radius:6px;padding:6px;cursor:pointer}.fl-bar{display:flex;align-items:center;gap:1px}
     .fl-bar button{border:0;background:transparent;color:rgba(255,255,255,.9);width:30px;height:30px;border-radius:9px;cursor:pointer;display:grid;place-items:center;padding:0;font:inherit;transition:background .12s,color .12s}
     .fl-bar button:hover{background:rgba(255,255,255,.12);color:#2dd4bf}
     .fl-bar .fl-label{width:auto;min-width:40px;padding:0 7px;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;background:rgba(255,255,255,.08)}

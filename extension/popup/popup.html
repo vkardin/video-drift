@@ -20,6 +20,7 @@
   </nav>
 
   <section id="view-current" role="tabpanel" aria-labelledby="tab-current">
+  <label class="sr-only" for="videoSelect" data-i18n="chooseVideo"></label><select id="videoSelect" hidden></select>
   <section id="empty" class="empty" hidden>
     <p data-i18n="popupNoVideo"></p>
   </section>
@@ -81,12 +82,17 @@
   </section>
   <p id="notice" class="hint" role="status" hidden></p>
 
+  <button id="saveLater" data-i18n="watchLater"></button>
+  <button id="openLibrary" data-i18n="openLibrary"></button>
   <details class="settings">
     <summary data-i18n="settings"></summary>
     <label><input type="checkbox" id="autoResume"> <span data-i18n="setAutoResume"></span></label>
     <label><input type="checkbox" id="rememberHistory"> <span data-i18n="setRememberHistory"></span></label>
     <label><input type="checkbox" id="hoverButton"> <span data-i18n="setHoverButton"></span></label>
     <label><input type="checkbox" id="pageMode"> <span data-i18n="setPageMode"></span></label>
+    <label><span data-i18n="subtitleSize"></span><input id="subtitleSize" type="range" min="12" max="36"></label>
+    <label><span data-i18n="subtitleBackground"></span><input id="subtitleBackground" type="range" min="0" max="100"></label>
+    <label><span data-i18n="subtitleOffset"></span><input id="subtitleOffset" type="range" min="16" max="160"></label>
     <p class="muted" data-i18n="setButtons"></p>
     <div id="btnToggles" class="toggles"></div>
   </details>
