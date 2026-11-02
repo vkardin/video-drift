@@ -74,7 +74,7 @@ Video Drift не збирає даних і нічого нікуди не на�
 
 <!-- project-family:start -->
 
-[**vkardin / tools — каталог усіх проєктів ↗**](https://vkardin.github.io/video-glow/projects/)
+[**vkardin / tools — каталог усіх проєктів ↗**](https://vkardin.github.io/)
 ## Інші інструменти від vkardin
 
 | Проєкт | Опис |

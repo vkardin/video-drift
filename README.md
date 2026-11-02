@@ -86,7 +86,7 @@ still need manual checks. Set `CHROMIUM_PATH` to use an existing Chromium execut
 
 <!-- project-family:start -->
 
-[**vkardin / tools — all projects ↗**](https://vkardin.github.io/video-glow/projects/)
+[**vkardin / tools — all projects ↗**](https://vkardin.github.io/)
 ## More tools by vkardin
 
 | Project | Projects |
