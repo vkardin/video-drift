@@ -4,6 +4,7 @@
   'use strict';
 
   const api = typeof browser !== 'undefined' && browser.storage ? browser : chrome;
+  const promiseApi = typeof browser !== 'undefined' && api === browser;
 
   const DEFAULTS = {
     opacity: 100,
@@ -90,6 +91,7 @@
     return new Promise((resolve) => {
       const st = store(area);
       if (!st) return resolve({});
+      if (promiseApi) return Promise.resolve().then(() => st.get(keys)).then((r) => resolve(r || {}), () => resolve({}));
       try { st.get(keys, (r) => resolve(r || {})); } catch (e) { resolve({}); }
     });
   }
@@ -97,6 +99,7 @@
     return new Promise((resolve, reject) => {
       const st = store(area);
       if (!st) return resolve();
+      if (promiseApi) return Promise.resolve().then(() => st.set(obj)).then(resolve, reject);
       try {
         st.set(obj, () => {
           const err = api.runtime.lastError;
@@ -109,6 +112,7 @@
     return new Promise((resolve) => {
       const st = store(area);
       if (!st) return resolve();
+      if (promiseApi) return Promise.resolve().then(() => st.remove(keys)).then(resolve, resolve);
       try { st.remove(keys, () => resolve()); } catch (e) { resolve(); }
     });
   }
@@ -120,7 +124,7 @@
   }
   async function saveSettings(patch) {
     const cur = await getSettings();
-    const next = Object.assign(cur, patch);
+    const next = Object.assign({}, cur, patch, { buttons: Object.assign({}, cur.buttons, patch.buttons) });
     await set('sync', { settings: next });
     return next;
   }
@@ -225,11 +229,14 @@
   }
   async function importBackup(data) {
     const validUrl = (u) => { try { return ['http:', 'https:'].includes(new URL(u).protocol); } catch { return false; } };
+    const validRecord = (r) => r && typeof r === 'object' && validUrl(r.url) &&
+      ['title', 'site'].every((k) => r[k] === undefined || typeof r[k] === 'string') &&
+      (r.at === undefined || Number.isFinite(r.at));
     if (!data || data.format !== 'video-drift' || data.version !== 1 ||
         !['history', 'bookmarks', 'later'].every((k) => Array.isArray(data[k]) && data[k].length <= 10000)) throw new Error('Invalid backup');
-    for (const p of data.history) if (!validUrl(p.url) || !Number.isFinite(p.t) || !Number.isFinite(p.d)) throw new Error('Invalid history');
-    for (const r of data.bookmarks) if (!validUrl(r.url) || typeof r.key !== 'string' || !Array.isArray(r.items) || r.items.length > 10000 || r.items.some((b) => !Number.isFinite(b.t) || typeof b.note !== 'string')) throw new Error('Invalid bookmarks');
-    for (const v of data.later) if (!validUrl(v.url)) throw new Error('Invalid saved video');
+    for (const p of data.history) if (!validRecord(p) || !Number.isFinite(p.t) || !Number.isFinite(p.d) || p.t < 0 || p.d <= 0 || p.t > p.d) throw new Error('Invalid history');
+    for (const r of data.bookmarks) if (!validRecord(r) || typeof r.key !== 'string' || !Array.isArray(r.items) || r.items.length > 10000 || r.items.some((b) => !b || !Number.isFinite(b.t) || b.t < 0 || typeof b.note !== 'string' || (b.id !== undefined && typeof b.id !== 'string') || (b.at !== undefined && !Number.isFinite(b.at)))) throw new Error('Invalid bookmarks');
+    for (const v of data.later) if (!validRecord(v)) throw new Error('Invalid saved video');
     // Validate the entire file before writing. Restore merges into existing collections.
     if (data.settings && typeof data.settings === 'object') {
       const patch = {};
@@ -270,7 +277,7 @@
   }
 
   root.VideoDrift = {
-    api, DEFAULTS, SPEED_MIN, SPEED_MAX, VOLUME_PRESETS,
+    api, promiseApi, getStorage: get, DEFAULTS, SPEED_MIN, SPEED_MAX, VOLUME_PRESETS,
     hash, videoKey, timeLink, fmtTime,
     getSettings, saveSettings, laterVideos, saveLater, removeLater, exportBackup, importBackup,
     getPosition, savePosition, clearPosition, allPositions, clearHistory,

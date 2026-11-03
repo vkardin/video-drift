@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const { webcrypto } = require('node:crypto');
 
-function fixture() {
+function fixture(promiseApi = false) {
   const data = { sync: {}, local: {} };
   let failSync = false;
   const api = { runtime: { id: 'test', lastError: null }, storage: {} };
@@ -26,10 +26,35 @@ function fixture() {
       remove(keys, cb) { for (const k of [].concat(keys)) delete data[area][k]; cb(); }
     };
   }
-  const ctx = vm.createContext({ chrome: api, URL, Date, crypto: webcrypto });
+  if (promiseApi) {
+    for (const area of ['sync', 'local']) {
+      const callbacks = api.storage[area];
+      api.storage[area] = Object.fromEntries(Object.entries(callbacks).map(([method, fn]) => [method, (arg) => new Promise((resolve, reject) => {
+        fn(arg, (result) => api.runtime.lastError ? reject(new Error(api.runtime.lastError.message)) : resolve(result));
+      })]));
+    }
+  }
+  const ctx = vm.createContext({ [promiseApi ? 'browser' : 'chrome']: api, URL, Date, crypto: webcrypto });
   vm.runInContext(fs.readFileSync('extension/shared/store.js', 'utf8'), ctx);
   return { F: ctx.VideoDrift, data, fail: (v) => { failSync = v; } };
 }
+
+test('Firefox promise APIs load settings and retain bookmarks through quota fallback and deletion', async () => {
+  const { F, fail } = fixture(true);
+  assert.equal(F.promiseApi, true);
+  await F.saveSettings({ opacity: 75 });
+  assert.equal((await F.getSettings()).opacity, 75);
+  const info = { url: 'https://example.com/video', title: 'Video' };
+  await F.addBookmark('key', info, 20, 'sync');
+  fail(true);
+  await F.addBookmark('key', info, 40, 'local');
+  assert.equal((await F.getBookmarks('key')).items.length, 2);
+  fail(false);
+  const rec = await F.getBookmarks('key');
+  await F.changeBookmark('key', F.bookmarkId(rec.items[0]), null);
+  assert.equal((await F.getBookmarks('key')).items.length, 1);
+  assert.equal((await F.allBookmarks())[0].items[0].note, 'local');
+});
 
 test('old history entries remain visible, sorted, and can be removed without affecting bookmarks', async () => {
   const { F, data } = fixture();
@@ -113,4 +138,33 @@ test('backup merges collections, preserves existing notes and rejects unsafe fil
   assert.equal((await F.laterVideos()).length, 0);
   await F.importBackup(backup);
   assert.equal((await F.laterVideos()).length, 1);
+});
+
+test('partial button settings preserve other choices, including backup imports', async () => {
+  const { F } = fixture();
+  await F.saveSettings({ buttons: { play: false, volume: false } });
+  await F.saveSettings({ buttons: { bookmark: false } });
+  const backup = await F.exportBackup();
+  backup.settings.buttons = { seek: false };
+  await F.importBackup(backup);
+  const { buttons } = await F.getSettings();
+  for (const key of ['play', 'volume', 'bookmark', 'seek']) assert.equal(buttons[key], false);
+  assert.equal(buttons.speed, true);
+});
+
+test('malformed backup metadata and playback positions are rejected before any write', async () => {
+  const { F, data } = fixture();
+  const backup = await F.exportBackup();
+  backup.settings.opacity = 50;
+  const before = JSON.stringify(data);
+  for (const entry of [
+    { collection: 'later', value: { url: 'https://example.com/', title: {} } },
+    { collection: 'history', value: { url: 'https://example.com/', t: -1, d: 60 } },
+    { collection: 'bookmarks', value: { key: 'key', url: 'https://example.com/', items: [{ t: 1, note: '', id: {} }] } }
+  ]) {
+    const bad = JSON.parse(JSON.stringify(backup));
+    bad[entry.collection].push(entry.value);
+    await assert.rejects(F.importBackup(bad));
+    assert.equal(JSON.stringify(data), before);
+  }
 });

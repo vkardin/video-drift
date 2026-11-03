@@ -358,7 +358,7 @@
     root.appendChild(frame);
     document.documentElement.appendChild(host);
     state.floatHost = host;
-    F.api.storage.local.get('playerRect', (r) => {
+    F.getStorage('local', 'playerRect').then((r) => {
       if (state.floatHost !== host) return;
       const rect = r.playerRect;
       if (rect) {

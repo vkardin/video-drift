@@ -20,6 +20,7 @@
   $('ver').textContent = 'v' + api.runtime.getManifest().version;
 
   function send(msg) {
+    if (F.promiseApi) return tabId == null ? Promise.resolve(null) : api.tabs.sendMessage(tabId, msg).catch(() => null);
     return new Promise((resolve) => {
       if (tabId == null) return resolve(null);
       api.tabs.sendMessage(tabId, msg, (res) => {
