@@ -7,7 +7,7 @@
 
 <p align="center">
 <a href="../../releases"><img alt="Chrome" src="https://img.shields.io/github/v/release/vkardin/video-drift?label=Chrome&logo=googlechrome&logoColor=white"></a>
-<a href="../../releases"><img alt="Firefox" src="https://img.shields.io/github/v/release/vkardin/video-drift?label=Firefox&logo=firefoxbrowser&logoColor=white"></a>
+<a href="https://addons.mozilla.org/firefox/addon/video-drift-floating-player/"><img alt="Firefox" src="https://img.shields.io/amo/v/video-drift-floating-player?label=Firefox&logo=firefoxbrowser&logoColor=white"></a>
 <a href="https://vkardin.github.io/video-drift/"><img alt="Website" src="https://img.shields.io/badge/site-vkardin.github.io%2Fvideo--drift-222"></a>
 <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
@@ -21,7 +21,7 @@ Video Drift выносит любое веб-видео в плавающее о
 ## Установка
 
 - **Chrome, Edge, Brave, Opera:** страница в Chrome Web Store скоро появится, пока ставьте zip ниже
-- **Firefox:** страница в Firefox Add-ons скоро появится, пока ставьте zip ниже
+- **Firefox:** [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/video-drift-floating-player/)
 - **Вручную:** zip для Chrome и Firefox на странице [Releases](../../releases). Chrome: распакуйте, откройте `chrome://extensions`, включите режим разработчика, нажмите «Загрузить распакованное». Firefox: `about:debugging` → «Загрузить временное дополнение»
 
 ## Возможности

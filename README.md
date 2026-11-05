@@ -7,7 +7,7 @@ English · <a href="README.ru.md">Русский</a> · <a href="README.uk.md">�
 
 <p align="center">
 <a href="../../releases"><img alt="Chrome" src="https://img.shields.io/github/v/release/vkardin/video-drift?label=Chrome&logo=googlechrome&logoColor=white"></a>
-<a href="../../releases"><img alt="Firefox" src="https://img.shields.io/github/v/release/vkardin/video-drift?label=Firefox&logo=firefoxbrowser&logoColor=white"></a>
+<a href="https://addons.mozilla.org/firefox/addon/video-drift-floating-player/"><img alt="Firefox" src="https://img.shields.io/amo/v/video-drift-floating-player?label=Firefox&logo=firefoxbrowser&logoColor=white"></a>
 <a href="https://vkardin.github.io/video-drift/"><img alt="Website" src="https://img.shields.io/badge/site-vkardin.github.io%2Fvideo--drift-222"></a>
 <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
@@ -21,7 +21,7 @@ A dedicated viewing library groups Continue, Watch later and Bookmarks, with sea
 ## Install
 
 - **Chrome, Edge, Brave, Opera:** Chrome Web Store listing is on the way; meanwhile use the zip below
-- **Firefox:** Firefox Add-ons listing is on the way; meanwhile use the zip below
+- **Firefox:** [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/video-drift-floating-player/)
 - **Manual install:** zip files for Chrome and Firefox on the [Releases](../../releases) page. Chrome: unzip, open `chrome://extensions`, turn on Developer mode, click *Load unpacked*. Firefox: `about:debugging` → *Load Temporary Add-on*
 
 ## Features
