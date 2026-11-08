@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const fs = require('node:fs');
 const path = require('node:path');
+const os = require('node:os');
 const http = require('node:http');
 const root = path.resolve(__dirname, '..');
 
@@ -116,12 +117,12 @@ for (const lang of ['en', 'ru', 'uk']) test('popup layout and translations: ' + 
   await seed(page);
   await page.locator('#tab-history').click();
   await page.locator('#historyList article').waitFor();
-  await page.locator('body').screenshot({ animations: 'disabled', path: '/tmp/video-drift-history-' + lang + '.png' });
+  await page.locator('body').screenshot({ animations: 'disabled', path: path.join(os.tmpdir(), 'video-drift-history-' + lang + '.png') });
   await page.locator('#tab-library').click();
   await page.locator('#libraryList article').first().waitFor();
-  await page.locator('body').screenshot({ animations: 'disabled', path: '/tmp/video-drift-library-' + lang + '.png' });
+  await page.locator('body').screenshot({ animations: 'disabled', path: path.join(os.tmpdir(), 'video-drift-library-' + lang + '.png') });
   await page.emulateMedia({ colorScheme: 'dark' });
-  await page.locator('body').screenshot({ animations: 'disabled', path: '/tmp/video-drift-library-' + lang + '-dark.png' });
+  await page.locator('body').screenshot({ animations: 'disabled', path: path.join(os.tmpdir(), 'video-drift-library-' + lang + '-dark.png') });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   assert.equal(await page.evaluate(() => document.querySelector('.tabs').scrollWidth > document.body.clientWidth), false);
   const untranslated = await page.locator('[data-i18n]').evaluateAll((els) => els.filter((el) => !el.textContent || el.textContent === el.dataset.i18n).map((el) => el.dataset.i18n));
@@ -166,7 +167,7 @@ test('content: delayed metadata seeks saved link; mini player returns the origin
   assert.equal(await page.locator('video-drift-player video').evaluate((v) => v.currentTime), 20);
   await page.evaluate(async () => { await VideoDrift.saveSettings({ subtitleSize: 28 }); });
   assert.equal(await page.locator('video-drift-player .fl-subs').evaluate((el) => el.style.fontSize), '28px');
-  await page.locator('video-drift-player').screenshot({ path: '/tmp/video-drift-2-player.png' });
+  await page.locator('video-drift-player').screenshot({ path: path.join(os.tmpdir(), 'video-drift-2-player.png') });
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   assert.equal(await page.locator('.player > video').count(), 1);
   assert.equal(await page.locator('video-drift-player').count(), 0);
@@ -197,7 +198,7 @@ test('full library filters sites, saves edits, removes and restores watch-later 
   await page.getByRole('textbox', { name: 'Edit note' }).fill('Changed in library');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await page.waitForFunction(async () => (await VideoDrift.getBookmarks('youtube:test')).items[0].note === 'Changed in library');
-  await page.screenshot({ path: '/tmp/video-drift-2-library.png' });
+  await page.screenshot({ path: path.join(os.tmpdir(), 'video-drift-2-library.png') });
   assert.deepEqual(errors, []);
 });
 

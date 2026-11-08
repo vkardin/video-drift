@@ -29,7 +29,7 @@ def load_manifest():
 def firefox_manifest(m):
     m = json.loads(json.dumps(m))
     worker = m["background"].pop("service_worker")
-    m["background"] = {"scripts": [worker]}
+    m["background"] = {"scripts": ["shared/store.js", worker]}
     m["browser_specific_settings"] = {
         "gecko": {
             "id": GECKO_ID,
