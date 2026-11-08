@@ -117,12 +117,62 @@
     });
   }
 
+  // Changes that read a record, modify it and write it back run one at a time, so two of them
+  // can never overwrite each other. Within one page a queue keeps them in order. Pages, tabs
+  // and the popup send them to the background, which runs every change through its own queue.
+  const MESSAGE = 'video-drift-store';
+  const NO_ANSWER = {};
+  const changes = {};
+  let queue = Promise.resolve();
+  let serving = false;
+  function serial(fn) {
+    const run = queue.then(() => fn());
+    queue = run.catch(() => {});
+    return run;
+  }
+  function viaBackground(op, args) {
+    const rt = api.runtime;
+    if (serving || !rt || typeof rt.sendMessage !== 'function' || !store('local')) return Promise.resolve(NO_ANSWER);
+    const msg = { type: MESSAGE, op, args };
+    const answer = (res) => {
+      if (!res || typeof res !== 'object') return NO_ANSWER;
+      if (res.error !== undefined) throw new Error(res.error);
+      return res.result;
+    };
+    if (promiseApi) return Promise.resolve().then(() => rt.sendMessage(msg)).then(answer, () => NO_ANSWER);
+    return new Promise((resolve, reject) => {
+      try {
+        rt.sendMessage(msg, (res) => {
+          if (rt.lastError) return resolve(NO_ANSWER);
+          try { resolve(answer(res)); } catch (e) { reject(e); }
+        });
+      } catch (e) { resolve(NO_ANSWER); }
+    });
+  }
+  function change(op, fn) {
+    changes[op] = (...args) => serial(() => fn(...args));
+    // Without a background (or before it answers) the change still runs here, in this page's queue.
+    return (...args) => viaBackground(op, args).then((r) => r === NO_ANSWER ? changes[op](...args) : r);
+  }
+  // Called once by the background script.
+  function serveRequests() {
+    serving = true;
+    api.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+      if (!msg || msg.type !== MESSAGE || !Object.prototype.hasOwnProperty.call(changes, msg.op)) return;
+      changes[msg.op](...(Array.isArray(msg.args) ? msg.args : [])).then(
+        (result) => sendResponse({ result }),
+        (e) => sendResponse({ error: String((e && e.message) || e) }));
+      return true;
+    });
+  }
+
   async function getSettings() {
     const r = await get('sync', 'settings');
     const s = r.settings || {};
     return Object.assign({}, DEFAULTS, s, { buttons: Object.assign({}, DEFAULTS.buttons, s.buttons) });
   }
-  async function saveSettings(patch) {
+  async function writeSettings(patch) {
+    patch = patch || {};
     const cur = await getSettings();
     const next = Object.assign({}, cur, patch, { buttons: Object.assign({}, cur.buttons, patch.buttons) });
     await set('sync', { settings: next });
@@ -174,7 +224,7 @@
       await set('local', { [k]: rec });
     }
   }
-  async function addBookmark(key, info, t, note) {
+  async function writeBookmark(key, info, t, note) {
     const rec = (await getBookmarks(key)) || { key, url: info.url, title: info.title, site: info.site, items: [] };
     rec.url = info.url || rec.url;
     rec.title = info.title || rec.title;
@@ -183,7 +233,7 @@
     await putBookmarks(key, rec);
     return rec;
   }
-  async function removeBookmark(key, index) {
+  async function deleteBookmark(key, index) {
     const rec = await getBookmarks(key);
     if (!rec) return null;
     rec.items.splice(index, 1);
@@ -193,7 +243,7 @@
   function bookmarkId(item) {
     return item.id || JSON.stringify([item.at, item.t, item.note]);
   }
-  async function changeBookmark(key, id, note) {
+  async function editBookmark(key, id, note) {
     const rec = await getBookmarks(key);
     if (!rec) return;
     const index = rec.items.findIndex((item) => bookmarkId(item) === id);
@@ -215,19 +265,19 @@
   async function laterVideos() {
     return (await get('local', 'later')).later || [];
   }
-  async function saveLater(info) {
+  async function writeLater(info) {
     const list = await laterVideos();
     const key = videoKey(info.url);
     if (!list.some((v) => videoKey(v.url) === key)) list.unshift({ url: info.url, title: info.title, at: Date.now() });
     await set('local', { later: list });
   }
-  async function removeLater(url) {
+  async function deleteLater(url) {
     await set('local', { later: (await laterVideos()).filter((v) => v.url !== url) });
   }
   async function exportBackup() {
     return { format: 'video-drift', version: 1, settings: await getSettings(), history: await allPositions(), bookmarks: await allBookmarks(), later: await laterVideos() };
   }
-  async function importBackup(data) {
+  async function restoreBackup(data) {
     const validUrl = (u) => { try { return ['http:', 'https:'].includes(new URL(u).protocol); } catch { return false; } };
     const validRecord = (r) => r && typeof r === 'object' && validUrl(r.url) &&
       ['title', 'site'].every((k) => r[k] === undefined || typeof r[k] === 'string') &&
@@ -244,7 +294,7 @@
       for (const [k, lo, hi] of [['opacity',30,100],['subtitleSize',12,36],['subtitleBackground',0,100],['subtitleOffset',16,160]]) if (Number.isFinite(data.settings[k])) patch[k] = Math.max(lo, Math.min(hi, data.settings[k]));
       if (['page','window'].includes(data.settings.floatMode)) patch.floatMode = data.settings.floatMode;
       if (data.settings.buttons && typeof data.settings.buttons === 'object') { patch.buttons = {}; for (const k of Object.keys(DEFAULTS.buttons)) if (typeof data.settings.buttons[k] === 'boolean') patch.buttons[k] = data.settings.buttons[k]; }
-      await saveSettings(patch);
+      await writeSettings(patch);
     }
     for (const p of data.history) {
       const key = videoKey(p.url), old = await getPosition(key);
@@ -257,8 +307,16 @@
       rec.items.sort((a,b) => a.t-b.t);
       await putBookmarks(key, rec);
     }
-    for (const v of data.later.slice().reverse()) await saveLater(v);
+    for (const v of data.later.slice().reverse()) await writeLater(v);
   }
+
+  const saveSettings = change('saveSettings', writeSettings);
+  const addBookmark = change('addBookmark', writeBookmark);
+  const removeBookmark = change('removeBookmark', deleteBookmark);
+  const changeBookmark = change('changeBookmark', editBookmark);
+  const saveLater = change('saveLater', writeLater);
+  const removeLater = change('removeLater', deleteLater);
+  const importBackup = change('importBackup', restoreBackup);
 
   function toMarkdown(records, heading) {
     const date = new Date().toISOString().slice(0, 10);
@@ -281,6 +339,6 @@
     hash, videoKey, timeLink, fmtTime,
     getSettings, saveSettings, laterVideos, saveLater, removeLater, exportBackup, importBackup,
     getPosition, savePosition, clearPosition, allPositions, clearHistory,
-    getBookmarks, addBookmark, removeBookmark, changeBookmark, bookmarkId, allBookmarks, toMarkdown
+    getBookmarks, addBookmark, removeBookmark, changeBookmark, bookmarkId, allBookmarks, toMarkdown, serveRequests
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
