@@ -83,6 +83,8 @@ Video Drift не собирает данные и ничего никуда не
 | **[Leveler](https://vkardin.github.io/leveler/)** | Ровная громкость, разборчивые диалоги, эквалайзер и управление скоростью. [GitHub](https://github.com/vkardin/leveler) |
 | **[Snapt](https://vkardin.github.io/snapt/)** | Скриншоты, стрелки и подписи. Приложение для Windows, macOS и Linux и расширение браузера. [GitHub](https://github.com/vkardin/snapt) |
 | **[UNI](https://vkardin.github.io/uni-homebot/)** | Домашний сервер в Telegram: приложения, мониторинг, уведомления и мини-приложение. [GitHub](https://github.com/vkardin/uni-homebot) |
+| **[Коли Є](https://vkardin.github.io/koly/ru/)** | Графики отключений света по всем областям Украины: статус сейчас, обратный отсчёт, сегодня и завтра. Виджет для Windows. [GitHub](https://github.com/vkardin/koly) |
+| **[Tukk](https://vkardin.github.io/tukk/ru/)** | Жесты телефоном для повседневных действий: встряхнуть для фонарика, перевернуть для тишины. Android, в разработке. [GitHub](https://github.com/vkardin/tukk) |
 
 [github.com/vkardin](https://github.com/vkardin) · Независимые инструменты · открытый код
 <!-- project-family:end -->
