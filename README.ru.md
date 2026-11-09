@@ -63,7 +63,7 @@ Video Drift не собирает данные и ничего никуда не
 | Папка | Что внутри |
 |---|---|
 | [`extension/`](extension) | Исходники расширения (загрузка через `chrome://extensions` → режим разработчика → «Загрузить распакованное») |
-| [`docs/`](docs) | Сайт на GitHub Pages |
+| [`docs/`](docs) | Заметки по поддержке и скриншоты для README. Сайт живёт в [vkardin.github.io](https://github.com/vkardin/vkardin.github.io/tree/main/video-drift) |
 | [`store/`](store) | Тексты для магазинов и спецификация графики |
 | [`tools/`](tools) | `build.py` собирает zip для Chrome и Firefox |
 

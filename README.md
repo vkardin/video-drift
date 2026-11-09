@@ -60,7 +60,7 @@ Video Drift collects no data and sends nothing anywhere: everything runs on your
 | Folder | What is inside |
 |---|---|
 | [`extension/`](extension) | Extension source (load via `chrome://extensions` → Developer mode → Load unpacked) |
-| [`docs/`](docs) | Website, served by GitHub Pages |
+| [`docs/`](docs) | Maintenance notes and README screenshots. The website lives in [vkardin.github.io](https://github.com/vkardin/vkardin.github.io/tree/main/video-drift) |
 | [`store/`](store) | Store listing texts and graphics specification |
 | [`tools/`](tools) | `build.py` packs the Chrome and Firefox zips |
 
