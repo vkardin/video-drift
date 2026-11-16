@@ -82,10 +82,10 @@ Video Drift не збирає даних і нічого нікуди не на�
 | **[Video Glow](https://vkardin.github.io/video-glow/)** | Підсвічування навколо відео в колір кадру. М’яке світло, LED-стрічка й колір кімнати. [GitHub](https://github.com/vkardin/video-glow) |
 | **[Leveler](https://vkardin.github.io/leveler/)** | Рівна гучність, розбірливі діалоги, еквалайзер і керування швидкістю. [GitHub](https://github.com/vkardin/leveler) |
 | **[Snapt](https://vkardin.github.io/snapt/)** | Знімки екрана, стрілки й підписи. Застосунок для Windows, macOS та Linux і розширення браузера. [GitHub](https://github.com/vkardin/snapt) |
-| **[UNI](https://vkardin.github.io/uni-homebot/)** | Домашній сервер у Telegram: застосунки, моніторинг, сповіщення й мінізастосунок. [GitHub](https://github.com/vkardin/uni-homebot) |
 | **[Коли Є](https://vkardin.github.io/koly/uk/)** | Графіки відключень світла для всіх областей України: статус зараз, зворотний відлік, сьогодні й завтра. Віджет для Windows. [GitHub](https://github.com/vkardin/koly) |
 | **[BlackoutMode](https://vkardin.github.io/blackoutmode/uk/)** | Ноутбук доживає до кінця відключення світла: знижує споживання, рахує, на скільки вистачить батареї та павербанка. Windows. [GitHub](https://github.com/vkardin/blackoutmode) |
-| **[Tukk](https://vkardin.github.io/tukk/uk/)** | Жести телефоном для щоденних дій: струсити для ліхтарика, перевернути для тиші. Android, у розробці. [GitHub](https://github.com/vkardin/tukk) |
+| **[Tukk](https://vkardin.github.io/tukk/uk/)** | Жести телефоном для щоденних дій: струсити для ліхтарика, перевернути для тиші. Android. [GitHub](https://github.com/vkardin/tukk) |
+| **[UNI](https://vkardin.github.io/uni-homebot/)** | Домашній сервер у Telegram: застосунки, моніторинг, сповіщення й мінізастосунок. [GitHub](https://github.com/vkardin/uni-homebot) |
 
 [github.com/vkardin](https://github.com/vkardin) · Незалежні інструменти · відкритий код
 <!-- project-family:end -->
